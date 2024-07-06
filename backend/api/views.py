@@ -49,11 +49,15 @@ class BlocklistView(APIView):
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         blocklist_path = os.path.join(base_dir, 'blocklist.txt')
         return blocklist_path
-
-    def get(self, request):
+    
+    def reload_blocklist(self):
         blocklist_path = self.get_blocklist_path()
         with open(blocklist_path, 'r') as f:
             blocklist = f.read().splitlines()
+        return blocklist
+
+    def get(self, request):
+        blocklist = self.reload_blocklist()
         return JsonResponse({'blocklist': blocklist})
     
     def post(self, request):
@@ -61,7 +65,7 @@ class BlocklistView(APIView):
         data = JSONParser().parse(request)
         serializer = BlocklistItemSerializer(data=data)
         if serializer.is_valid():
-            blocklist_path = self.get_blocklist_path()
+            blocklist_path = self.reload_blocklist()
             ip_or_domain = serializer.validated_data['ip_or_domain']
             with open(blocklist_path, 'r+') as file:
                 blocklist = file.read().splitlines()
