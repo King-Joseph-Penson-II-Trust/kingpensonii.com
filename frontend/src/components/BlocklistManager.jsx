@@ -1,19 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../api"
+
 
 const BlocklistManager = () => {
   const [blocklist, setBlocklist] = useState([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchBlocklist();
+    fetchBlocklist(); // Fetch immediately on mount
+
+    const intervalId = setInterval(() => {
+      fetchBlocklist(); // Fetch every 10 seconds
+    }, 30000); // 5000 milliseconds = 10 seconds
+
+    return () => clearInterval(intervalId); // Cleanup on unmount
+  
   }, []);
 
   const fetchBlocklist = async () => {
-    const response = await axios.get('http://192.168.1.13:8005/api/blocklist/');
-    setBlocklist(response.data.blocklist);
+    let isMounted = true; // Cleanup flag
+    try {
+      const response = await api.get('/api/blocklist/');
+      if (isMounted) {
+        setBlocklist(response.data.blocklist);
+        setError(''); // Clear error on successful fetch
+      }
+    } catch (error) {
+      console.error('Error fetching blocklist:', error);
+      if (isMounted) {
+        setError('Failed to fetch blocklist. Please try again later.'); // Step 2: Handle error
+      }
+    }
+    return () => { isMounted = false; }; // Cleanup function
   };
+  
 
   const handleInputChange = (e) => {
     setInput(e.target.value);
@@ -23,9 +45,11 @@ const BlocklistManager = () => {
     setSearchQuery(e.target.value);
   };
 
+  
+
   const addToBlocklist = async () => {
     try {
-      const response = await axios.post('http://192.168.1.13:8005/api/blocklist/', { ip_or_domain: input });
+      const response = await api.post('/api/blocklist/', { ip_or_domain: input });
       setBlocklist([...blocklist, input]);
       setInput(''); // Clear input after adding
     } catch (error) {
@@ -35,7 +59,7 @@ const BlocklistManager = () => {
 
   const removeFromBlocklist = async (itemToRemove) => {
     try {
-      await axios.delete('http://192.168.1.13:8005/api/blocklist/', { data: { ip_or_domain: itemToRemove } });
+      await api.delete('/api/blocklist/', { data: { ip_or_domain: itemToRemove } });
       setBlocklist(blocklist.filter(item => item !== itemToRemove));
     } catch (error) {
       console.error('Error removing from blocklist:', error);
@@ -58,6 +82,7 @@ const BlocklistManager = () => {
 
   return (
     <div style={searchComponentStyle}>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <input type="text" value={searchQuery} onChange={handleSearchChange} placeholder="Search blocklist" />
       <input type="text" value={input} onChange={handleInputChange} placeholder="Add to blocklist" />
       <button onClick={addToBlocklist}>Add</button>
@@ -73,7 +98,10 @@ const BlocklistManager = () => {
           </li>
         ))}
       </ul>
+    
+    {/* Render blocklist and other UI elements here */}
     </div>
+    
   );
 };
 
