@@ -1,0 +1,34 @@
+!!ExportedWorkflow
+apiVersion: torq.io/v2alpha
+kind: Workflow
+id: 9da670dc-35cb-4a5c-8604-e8d4598a2d93
+name: Test CI/CD
+trigger:
+  onDemandTrigger:
+    parameterList:
+      parameters: []
+playbook:
+  steps:
+    - name: us-docker.pkg.dev/stackpulse/public/utils/output_utils/print:2.0.0
+      id: print_a_message_to_stdout
+      env:
+        __TQ_FILE_ENV_PARSER__FILE_OR_STRING: plain-text
+        FILE_OR_STRING: Hello, this is a string.
+      uuid: 377e72de-a747-4524-91ab-e339718416d0
+      pretty_name: Print a message to stdout
+      options:
+        executor:
+          name: utils_infrastructure_v_1_28_0
+          env:
+            COMMAND: print
+          sync: true
+          disable: false
+      manifestId: cb81ceab-69bd-5e29-b27b-0f2bdff326d7
+      isPrivate: false
+      isPrivateUrl: true
+      mock_output:
+        enabled: false
+      skip: false
+      retry: {}
+  output_schema: '{}'
+root: true
